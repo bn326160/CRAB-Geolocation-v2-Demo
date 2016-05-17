@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Crab Geolocation</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
+        integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css"
+        integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+  <!--[if lt IE 9]>
+  <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+  <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<div class="row">
+  <div class="col-md-1"></div>
+  <div class="col-md-6">
+    <h1>CRAB Geolocation</h1>
+    <a href="https://www.agiv.be/producten/crab/meer-info-over-crab/gebruik-van-het-crab/crab-raadpleegdiensten/geolocation">Meer
+      informatie</a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-1"></div>
+  <div class="col-md-6">
+
+    <ul class="nav nav-tabs" role="tablist">
+      <li role="presentation" class="active"><a href="#geo" aria-controls="geo" role="tab" data-toggle="tab">Geocode</a>
+      </li>
+      <li role="presentation"><a href="#rev" aria-controls="rev" role="tab" data-toggle="tab">Reverse geocode</a></li>
+    </ul>
+
+    <div class="tab-content">
+      <div role="tabpanel" class="tab-pane fade in active" id="geo">
+        <form>
+          <div class="form-group">
+            <label for="adres">Adres</label>
+            <input type="text" class="form-control" id="adres" placeholder="Adres" autocomplete="off"
+                   data-provide="typeahead" Value="">
+          </div>
+          <button type="submit" id="geoSearch" data-loading-text="Zoeken..." class="btn btn-primary">Zoek</button>
+        </form>
+      </div>
+
+      <div role="tabpanel" class="tab-pane fade" id="rev">
+        <form>
+          <div class="form-group">
+            <label for="lat">Latitude</label>
+            <input type="text" class="form-control" id="lat" placeholder="Latitude" Value="50.879844">
+          </div>
+          <div class="form-group">
+            <label for="long">Longitude</label>
+            <input type="text" class="form-control" id="long" placeholder="Longitude" Value="4.700518">
+          </div>
+          <button type="submit" id="revSearch" data-loading-text="Zoeken..." class="btn btn-primary">Zoek</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-1">
+  </div>
+  <div class="col-md-9" id="result">
+    <!--Resultaten komen hier-->
+  </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
+        integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-3-typeahead/4.0.1/bootstrap3-typeahead.min.js"></script>
+
+<script>
+  var CRAB_Location_API = "http://loc.geopunt.be/v2/Location";
+  var CRAB_Suggestion_API = "http://loc.geopunt.be/v2/Suggestion";
+
+  // Tabs
+  $('#myTabs a').click(function (e) {
+    e.preventDefault()
+    $(this).tab('show')
+  })
+
+  // Suggestions
+  var delay = (function () {
+    var timer = 0;
+    return function (callback, ms) {
+      clearTimeout(timer);
+      timer = setTimeout(callback, ms);
+    };
+  })();
+
+  $('#adres').typeahead({
+    source: function (query, process) {
+      delay(function () {
+        return $.ajax({
+          url: CRAB_Suggestion_API,
+          jsonp: "callback",
+          dataType: "jsonp",
+          data: {
+            q: query
+          },
+          success: function (response) {
+            console.log(response);
+            return process(response.SuggestionResult);
+          }
+        });
+      }, 300);
+    }
+  });
+
+  // Search
+  $('#geoSearch').on('click', function (e) {
+    e.preventDefault();
+    var $btn = $(this);
+    $btn.button('loading');
+    $.ajax({
+      url: CRAB_Location_API,
+      jsonp: "callback",
+      dataType: "jsonp",
+      data: {
+        q: $("#adres").val()
+      },
+      success: function (response) {
+        console.log(response);
+        format(response);
+        $btn.button('reset');
+      }
+    });
+  });
+
+  $('#revSearch').on('click', function (e) {
+    e.preventDefault();
+    var $btn = $(this);
+    $btn.button('loading');
+    $.ajax({
+      url: CRAB_Location_API,
+      jsonp: "callback",
+      dataType: "jsonp",
+      data: {
+        q: $("#lat").val() + ',' + $("#long").val(),
+        c: 25
+      },
+      success: function (response) {
+        console.log(response);
+        format(response);
+        $btn.button('reset');
+      }
+    });
+  });
+
+  function format(data) {
+    $("#result").html('<h2>Resultaat</h2><table class="table table-striped"><tr><th>Adres</th><th>Detailniveau</th><th>Latitude</th><th>Longitude</th></tr></table>');
+    for (var i = 0; i < data.LocationResult.length; i++) {
+      $('#result tr:last').after('<tr><td>' + data.LocationResult[i].FormattedAddress + '</td><td>' + data.LocationResult[i].LocationType.split("_")[1] + '</td><td>' + data.LocationResult[i].Location.Lat_WGS84 + '</td><td>' + data.LocationResult[i].Location.Lon_WGS84 + '</td></tr>');
+    }
+  }
+
+  // Firefox?
+  document.getElementById("geoSearch").disabled = false;
+  document.getElementById("revSearch").disabled = false;
+</script>
+</body>
+</html>
