@@ -3,8 +3,8 @@ Use AGIV (Flanders) Geoservice API in Javascript to make (reverse) geolocation l
 
 [More information](https://www.agiv.be/producten/crab/meer-info-over-crab/gebruik-van-het-crab/crab-raadpleegdiensten/geolocation)
 
-## API
-http://loc.geopunt.be/v2/
+## Demo
+[on Github.io](http://bn326160.github.io/CRAB-Geolocation-v2-Demo/)
 
 ## Libraries
 * Bootstrap 3.3.6
